@@ -1,0 +1,23 @@
+{
+  "name": "ai-daily-report",
+  "version": "1.0.0",
+  "description": "AI 日报生成器 - RSS 聚合 + Claude 摘要 + Slack 推送",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx src/index.ts --now",
+    "cron": "tsx src/index.ts --cron"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "cheerio": "^1.0.0",
+    "node-cron": "^3.0.3",
+    "rss-parser": "^3.13.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.11"
+  }
+}
