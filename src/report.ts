@@ -1,5 +1,6 @@
 import type { NewsItem } from "./rss.js";
 import type { PHProduct } from "./producthunt.js";
+import type { TrendingRepo } from "./github-trending.js";
 
 /**
  * 生成不依赖 LLM 的基础日报（Slack mrkdwn 格式）
@@ -7,6 +8,7 @@ import type { PHProduct } from "./producthunt.js";
 export function generateBasicReport(
   news: NewsItem[],
   phProducts: PHProduct[],
+  trendingRepos: TrendingRepo[],
   date: string
 ): string {
   const lines: string[] = [];
@@ -65,6 +67,25 @@ export function generateBasicReport(
   }
 
   lines.push("");
+
+  // --- GitHub Trending ---
+  if (trendingRepos.length > 0) {
+    lines.push("*⭐ GitHub Trending*");
+    lines.push("");
+
+    for (const r of trendingRepos.slice(0, 10)) {
+      const lang = r.language ? `\`${r.language}\`` : "";
+      const today = r.todayStars > 0 ? ` (+${r.todayStars} today)` : "";
+      lines.push(`• <${r.url}|${escapeSlack(r.fullName)}> ${lang} ⭐${r.stars}${today}`);
+      if (r.description) {
+        lines.push(`  ${truncate(r.description, 120)}`);
+      }
+    }
+  } else {
+    lines.push("_今日暂无 GitHub Trending 数据_");
+  }
+
+  lines.push("");
   lines.push("---");
   lines.push(`_🤖 由 AI Daily Report 自动生成 | ${new Date().toLocaleTimeString("zh-CN", { hour12: false })}_`);
 
@@ -78,6 +99,7 @@ export function buildFinalReport(
   aiSummary: string | null,
   news: NewsItem[],
   phProducts: PHProduct[],
+  trendingRepos: TrendingRepo[],
   date: string
 ): string {
   if (aiSummary) {
@@ -88,7 +110,7 @@ export function buildFinalReport(
   }
 
   // 兜底：纯 RSS 聚合报告
-  return generateBasicReport(news, phProducts, date);
+  return generateBasicReport(news, phProducts, trendingRepos, date);
 }
 
 function escapeSlack(text: string): string {

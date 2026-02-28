@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { fetchAllNews } from "./rss.js";
-import { fetchProductHuntDaily, filterAiProducts } from "./producthunt.js";
+import { fetchProductHuntDaily } from "./producthunt.js";
+import { fetchGitHubTrending } from "./github-trending.js";
 import { generateSummary } from "./summarize.js";
 import { buildFinalReport } from "./report.js";
 import { sendToSlack } from "./slack.js";
@@ -45,22 +46,20 @@ async function runDailyReport(): Promise<void> {
   console.log(`${"=".repeat(50)}\n`);
 
   try {
-    // 1. 获取 RSS 新闻
-    const news = await fetchAllNews();
+    // 1. 并发获取所有数据源
+    const [news, phProducts, trendingRepos] = await Promise.all([
+      fetchAllNews(),
+      fetchProductHuntDaily(),
+      fetchGitHubTrending(),
+    ]);
 
-    // 2. 获取 Product Hunt 排行榜
-    const phAll = await fetchProductHuntDaily();
-    const phAi = filterAiProducts(phAll);
-    // 如果 AI 过滤后太少，就用全部
-    const phProducts = phAi.length >= 3 ? phAi : phAll;
+    console.log(`\n📊 Data collected: ${news.length} news + ${phProducts.length} PH products + ${trendingRepos.length} trending repos`);
 
-    console.log(`\n📊 Data collected: ${news.length} news + ${phProducts.length} PH products`);
+    // 2. 尝试 AI 摘要
+    const aiSummary = await generateSummary(news, phProducts, trendingRepos, today);
 
-    // 3. 尝试 AI 摘要
-    const aiSummary = await generateSummary(news, phProducts, today);
-
-    // 4. 构建最终报告
-    const report = buildFinalReport(aiSummary, news, phProducts, today);
+    // 3. 构建最终报告
+    const report = buildFinalReport(aiSummary, news, phProducts, trendingRepos, today);
 
     // 5. 发送到 Slack
     await sendToSlack(report);
