@@ -2,8 +2,8 @@ name: AI Daily Report
 
 on:
   schedule:
-    # 调试：每小时触发一次
-    - cron: '37 * * * *'
+    # UTC 1:37 ≈ 北京时间 9:37（非整点，减少调度延迟）
+    - cron: '37 1 * * *'
   workflow_dispatch: # 支持手动触发
 
 jobs:
